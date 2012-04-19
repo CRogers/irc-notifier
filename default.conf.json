@@ -1,0 +1,5 @@
+{
+	"host": "irc.freenode.net",
+	"channel": "#irc-notifier-default",
+	"nick": "irc-notifier"
+}
