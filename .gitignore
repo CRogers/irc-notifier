@@ -1,0 +1,5 @@
+.fuse_hidden*
+*~
+node_modules/
+*.conf.json
+!default.conf.json
