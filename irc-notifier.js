@@ -1,9 +1,10 @@
 (function() {
-  var client, conf, confFile, exec, fs, irc, makeSafe, notify, notifyTime;
+  var batch, client, conf, confFile, exec, fs, irc, lastBatch, makeSafe, notify, postBatch;
   irc = require('irc');
   fs = require('fs');
   exec = require('child_process').exec;
-  notifyTime = 1000;
+  batch = [];
+  lastBatch = 0;
   confFile = process.argv[2];
   conf = JSON.parse(fs.readFileSync("" + (confFile || 'default') + ".conf.json"));
   client = new irc.Client(conf.host, conf.nick);
@@ -12,12 +13,27 @@
       return console.log("Joined " + conf.channel);
     });
   }, 3000);
+  postBatch = function() {
+    var body;
+    if (batch.length > 0) {
+      body = batch.join("\n");
+      batch = [];
+      return notify(conf.channel, body);
+    }
+  };
+  if (conf.batchTime) {
+    setInterval(postBatch, conf.batchTime);
+  }
   client.on('message', function(from, to, msg) {
-    return notify("" + from + ":", msg);
+    if (!conf.batchTime) {
+      return notify("" + from + ":", msg);
+    } else {
+      return batch.push("" + from + ": " + msg);
+    }
   });
   notify = function(title, sub) {
     console.log("Notify " + title + " " + sub);
-    return exec("notify-send -t " + notifyTime + " '" + (makeSafe(title)) + "' '" + (makeSafe(sub)) + "'");
+    return exec("notify-send '" + (makeSafe(title)) + "' '" + (makeSafe(sub)) + "'");
   };
   makeSafe = function(text) {
     return text.replace("'", '`');
